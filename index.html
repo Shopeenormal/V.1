@@ -312,11 +312,6 @@
             margin: 0;
         }
 
-        .email-number {
-            color: #667eea;
-            font-weight: 600;
-        }
-
         .card-actions {
             display: flex;
             gap: 8px;
@@ -332,11 +327,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
+            font-size: 1.4rem;
         }
 
         .edit-btn {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
             color: white;
         }
 
@@ -423,6 +418,7 @@
             line-height: 1.4;
             cursor: pointer;
             transition: all 0.3s ease;
+            word-break: break-word;
         }
 
         .card-note-content:hover {
@@ -517,6 +513,12 @@
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .modal-content {
@@ -526,6 +528,8 @@
             border-radius: 20px;
             width: 90%;
             max-width: 350px;
+            position: relative;
+            top: 50%;
             transform: translateY(-50%);
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
             animation: modalSlideIn 0.3s ease-out;
@@ -578,25 +582,6 @@
             transform: translateY(-2px);
         }
 
-        .note-display {
-            max-width: 120px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            cursor: pointer;
-            color: #6b7280;
-        }
-
-        .note-display:hover {
-            color: #374151;
-            text-decoration: underline;
-        }
-
-        .note-display.empty {
-            color: #d1d5db;
-            font-style: italic;
-        }
-
         /* iPhone 13 Pro Max specific optimizations */
         @media (max-width: 428px) {
             .container {
@@ -609,20 +594,8 @@
                 padding-top: 60px; /* Account for notch */
             }
             
-            .data-table th,
-            .data-table td {
-                padding: 10px 6px;
-                font-size: 0.75rem;
-            }
-            
             .app-name {
                 font-size: 0.65rem;
-            }
-            
-            .table-app-toggle {
-                width: 20px;
-                height: 20px;
-                font-size: 0.9rem;
             }
         }
     </style>
@@ -690,7 +663,6 @@
         </div>
     </div>
 
-    <!-- Modal for editing notes -->
     <div id="noteModal" class="modal">
         <div class="modal-content">
             <h3>แก้ไขหมายเหตุ</h3>
@@ -742,14 +714,14 @@
 
         // Utility functions
         function showAlert(message, type = 'error') {
-            const alert = document.createElement('div');
-            alert.className = `alert ${type}`;
-            alert.textContent = message;
+            const alertEl = document.createElement('div');
+            alertEl.className = `alert ${type}`;
+            alertEl.textContent = message;
             alertContainer.innerHTML = '';
-            alertContainer.appendChild(alert);
+            alertContainer.appendChild(alertEl);
             
             setTimeout(() => {
-                alert.remove();
+                alertEl.remove();
             }, 5000);
         }
 
@@ -767,7 +739,7 @@
             
             currentAppStates[app] = nextStatus;
             
-            const toggle = document.querySelector(`[data-app="${app}"]`);
+            const toggle = document.querySelector(`.form-section [data-app="${app}"]`);
             updateAppToggle(toggle, nextStatus);
         }
 
@@ -775,10 +747,9 @@
             emailInput.value = '';
             noteInput.value = '';
             
-            // Reset all app states
             Object.keys(currentAppStates).forEach(app => {
                 currentAppStates[app] = 'unknown';
-                const toggle = document.querySelector(`[data-app="${app}"]`);
+                const toggle = document.querySelector(`.form-section [data-app="${app}"]`);
                 updateAppToggle(toggle, 'unknown');
             });
         }
@@ -793,13 +764,9 @@
                 minute: '2-digit'
             });
         }
-
-        function createTableAppToggle(app, status, emailId) {
-            // This function is no longer needed with the new card layout
-        }
-
+        
         function getStatusIcon(status) {
-            return statusIcons[status];
+            return statusIcons[status] || '⚪';
         }
 
         async function updateAppStatus(emailId, app, currentStatus) {
@@ -815,8 +782,7 @@
                 
                 if (error) throw error;
                 
-                loadData(); // Refresh the data to show updated status
-                
+                loadData();
             } catch (error) {
                 showAlert(`ไม่สามารถอัปเดตสถานะ ${app}: ${error.message}`);
             }
@@ -869,20 +835,75 @@
                 showAlert('บันทึกหมายเหตุเรียบร้อยแล้ว!', 'success');
                 closeNoteModal();
                 loadData();
-                
             } catch (error) {
                 showAlert(`ไม่สามารถบันทึกหมายเหตุ: ${error.message}`);
             }
         }
+        
+        // Helper function to create a card and attach listeners
+        function createEmailCard(row) {
+            const card = document.createElement('div');
+            card.className = 'email-card';
+            
+            card.innerHTML = `
+                <div class="card-header">
+                    <h3 class="email-title">${row.email.replace('@gmail.com', '')}</h3>
+                    <div class="card-actions">
+                        <button class="card-action-btn edit-btn" title="แก้ไขหมายเหตุ">📝</button>
+                        <button class="card-action-btn delete-btn" title="ลบอีเมล">🗑️</button>
+                    </div>
+                </div>
+                <div class="card-date">วันที่สมัคร: ${formatDate(row.created_at)}</div>
+                <div class="card-apps">
+                    <div class="card-apps-title">แอปที่ลงทะเบียน:</div>
+                    <div class="card-apps-grid">
+                        <div class="card-app-item">
+                            <span class="card-app-name">Shopee</span>
+                            <span class="card-app-status" data-app="shopee">${getStatusIcon(row.shopee)}</span>
+                        </div>
+                        <div class="card-app-item">
+                            <span class="card-app-name">Gemini</span>
+                            <span class="card-app-status" data-app="gemini">${getStatusIcon(row.gemini)}</span>
+                        </div>
+                        <div class="card-app-item">
+                            <span class="card-app-name">ChatGPT</span>
+                            <span class="card-app-status" data-app="chatgpt">${getStatusIcon(row.chatgpt)}</span>
+                        </div>
+                        <div class="card-app-item">
+                            <span class="card-app-name">TikTok</span>
+                            <span class="card-app-status" data-app="tiktok">${getStatusIcon(row.tiktok)}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-note">
+                    <div class="card-note-title">หมายเหตุ:</div>
+                    <div class="card-note-content ${row.note ? '' : 'empty'}">${row.note || 'ไม่มีหมายเหตุ'}</div>
+                </div>
+            `;
+
+            // Add event listeners for functionality
+            const noteContent = card.querySelector('.card-note-content');
+            const editBtn = card.querySelector('.edit-btn');
+            const deleteBtn = card.querySelector('.delete-btn');
+            
+            const noteText = row.note || '';
+            editBtn.addEventListener('click', () => openNoteModal(row.id, noteText));
+            noteContent.addEventListener('click', () => openNoteModal(row.id, noteText));
+            deleteBtn.addEventListener('click', () => deleteEmail(row.id));
+
+            card.querySelectorAll('.card-app-status').forEach(statusEl => {
+                const appName = statusEl.dataset.app;
+                if (appName) {
+                   statusEl.addEventListener('click', () => updateAppStatus(row.id, appName, row[appName]));
+                }
+            });
+
+            return card;
+        }
 
         async function loadData() {
             try {
-                tableContainer.innerHTML = `
-                    <div class="loading">
-                        <div class="spinner"></div>
-                        กำลังโหลดข้อมูล...
-                    </div>
-                `;
+                tableContainer.innerHTML = `<div class="loading"><div class="spinner"></div>กำลังโหลดข้อมูล...</div>`;
 
                 const { data, error } = await supabase
                     .from('email_usage')
@@ -890,6 +911,8 @@
                     .order('created_at', { ascending: false });
 
                 if (error) throw error;
+                
+                tableContainer.innerHTML = ''; // Clear loading spinner
 
                 if (data.length === 0) {
                     tableContainer.innerHTML = `
@@ -897,73 +920,40 @@
                             <div class="empty-state-icon">📭</div>
                             <h3>ยังไม่มีอีเมลที่ติดตาม</h3>
                             <p>เพิ่มอีเมลแรกของคุณเพื่อเริ่มต้น!</p>
-                        </div>
-                    `;
+                        </div>`;
                     return;
                 }
 
-                const container = document.createElement('div');
-                container.className = 'table-container';
-                
-                data.forEach((row, index) => {
-                    const card = document.createElement('div');
-                    card.className = 'email-card';
-                    
-                    card.innerHTML = `
-                        <div class="card-header">
-                            <h3 class="email-title">
-                                ${row.email.replace('@gmail.com', '')} 
-                                <span class="email-number">E${index + 1}</span>
-                            </h3>
-                            <div class="card-actions">
-                                <button class="card-action-btn edit-btn" onclick="openNoteModal(${row.id}, '${(row.note || '').replace(/'/g, "\\'")}')">
-                                    ✓
-                                </button>
-                                <button class="card-action-btn delete-btn" onclick="deleteEmail(${row.id})">
-                                    🗑
-                                </button>
-                            </div>
-                        </div>
-                    
-                        <div class="card-date">
-                            วันที่สมัคร: ${formatDate(row.created_at)}
-                        </div>
-                    
-                        <div class="card-apps">
-                            <div class="card-apps-title">แอปที่ลงทะเบียน:</div>
-                            <div class="card-apps-grid">
-                                <div class="card-app-item">
-                                    <span class="card-app-name">Shopee</span>
-                                    <span class="card-app-status" onclick="updateAppStatus(${row.id}, 'shopee', '${row.shopee}')">${getStatusIcon(row.shopee)}</span>
-                                </div>
-                                <div class="card-app-item">
-                                    <span class="card-app-name">Gemini</span>
-                                    <span class="card-app-status" onclick="updateAppStatus(${row.id}, 'gemini', '${row.gemini}')">${getStatusIcon(row.gemini)}</span>
-                                </div>
-                                <div class="card-app-item">
-                                    <span class="card-app-name">ChatGPT</span>
-                                    <span class="card-app-status" onclick="updateAppStatus(${row.id}, 'chatgpt', '${row.chatgpt}')">${getStatusIcon(row.chatgpt)}</span>
-                                </div>
-                                <div class="card-app-item">
-                                    <span class="card-app-name">TikTok</span>
-                                    <span class="card-app-status" onclick="updateAppStatus(${row.id}, 'tiktok', '${row.tiktok}')">${getStatusIcon(row.tiktok)}</span>
-                                </div>
-                            </div>
-                        </div>
-                    
-                        <div class="card-note">
-                            <div class="card-note-title">หมายเหตุ:</div>
-                            <div class="card-note-content ${row.note ? '' : 'empty'}" onclick="openNoteModal(${row.id}, '${(row.note || '').replace(/'/g, "\\'")}')">
-                                ${row.note || 'ไม่มีหมายเหตุ'}
-                            </div>
-                        </div>
-                    `;
-                    
-                    container.appendChild(card);
+                const cardContainer = document.createElement('div');
+                cardContainer.className = 'table-container';
+                tableContainer.appendChild(cardContainer);
+
+                // Determine which items to show initially
+                const dataToShow = data.length > 10 ? data.slice(0, 10) : data;
+                dataToShow.forEach(row => {
+                    const card = createEmailCard(row);
+                    cardContainer.appendChild(card);
                 });
 
-                tableContainer.innerHTML = '';
-                tableContainer.appendChild(container);
+                // Add "Show More" button if there are more than 10 items
+                if (data.length > 10) {
+                    const showMoreButton = document.createElement('button');
+                    showMoreButton.textContent = `แสดงเพิ่มเติม (${data.length - 10} รายการ)`;
+                    showMoreButton.className = 'add-button';
+                    showMoreButton.style.marginTop = '16px';
+                    showMoreButton.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                    
+                    showMoreButton.addEventListener('click', () => {
+                        const hiddenData = data.slice(10);
+                        hiddenData.forEach(row => {
+                            const card = createEmailCard(row);
+                            cardContainer.appendChild(card);
+                        });
+                        showMoreButton.remove();
+                    }, { once: true });
+
+                    tableContainer.appendChild(showMoreButton);
+                }
 
             } catch (error) {
                 console.error('Error loading data:', error);
@@ -973,8 +963,7 @@
                         <div class="empty-state-icon">⚠️</div>
                         <h3>ไม่สามารถโหลดข้อมูลได้</h3>
                         <p>${error.message}</p>
-                    </div>
-                `;
+                    </div>`;
             }
         }
 
@@ -1015,7 +1004,6 @@
                 showAlert('เพิ่มอีเมลเรียบร้อยแล้ว!', 'success');
                 resetForm();
                 loadData();
-
             } catch (error) {
                 console.error('Error adding email:', error);
                 showAlert(`ไม่สามารถเพิ่มอีเมล: ${error.message}`);
@@ -1025,7 +1013,7 @@
             }
         }
 
-        // Event listeners
+        // --- Event listeners ---
         appToggles.forEach(toggle => {
             toggle.addEventListener('click', () => {
                 const app = toggle.dataset.app;
@@ -1044,13 +1032,13 @@
             }
         });
 
-        modalNoteInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && e.ctrlKey) {
+        modalNoteInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
                 saveNote();
             }
         });
 
-        // Close modal when clicking outside
         noteModal.addEventListener('click', (e) => {
             if (e.target === noteModal) {
                 closeNoteModal();
