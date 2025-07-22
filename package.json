@@ -1,0 +1,13 @@
+{
+  "name": "email-usage-tracker",
+  "version": "1.0.0",
+  "description": "Email usage tracker with Supabase",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python3 -m http.server 8000",
+    "start": "python3 -m http.server 8000"
+  },
+  "keywords": ["email", "tracker", "supabase"],
+  "author": "",
+  "license": "MIT"
+}
