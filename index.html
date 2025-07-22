@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Usage Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .form-section {
+            padding: 30px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .email-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .email-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .email-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .email-suffix {
+            position: absolute;
+            right: 16px;
+            color: #6b7280;
+            pointer-events: none;
+            font-size: 1rem;
+        }
+
+        .note-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        .note-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .apps-section {
+            margin: 20px 0;
+        }
+
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+
+        .app-toggle {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #f9fafb;
+        }
+
+        .app-toggle:hover {
+            border-color: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .app-toggle.unknown {
+            border-color: #9ca3af;
+        }
+
+        .app-toggle.used {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .app-toggle.unused {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .app-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .app-name {
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.9rem;
+        }
+
+        .add-button {
+            width: 100%;
+            padding: 14px 24px;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 20px;
+        }
+
+        .add-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+        }
+
+        .add-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .table-section {
+            padding: 30px;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .table-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .refresh-button {
+            padding: 8px 16px;
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .refresh-button:hover {
+            background: #e5e7eb;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .data-table th {
+            background: #f9fafb;
+            padding: 16px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.9rem;
+        }
+
+        .data-table td {
+            padding: 16px 12px;
+            border-bottom: 1px solid #f3f4f6;
+            vertical-align: middle;
+        }
+
+        .data-table tr:hover {
+            background: #f9fafb;
+        }
+
+        .table-app-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1.2rem;
+        }
+
+        .table-app-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .delete-button {
+            padding: 6px 12px;
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .delete-button:hover {
+            background: #fecaca;
+            border-color: #f87171;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 12px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 16px 0;
+            font-weight: 500;
+        }
+
+        .alert.error {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .alert.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+            color: #374151;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .apps-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .form-section, .table-section {
+                padding: 20px;
+            }
+            
+            .data-table th, .data-table td {
+                padding: 12px 8px;
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .apps-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .table-container {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📧 Email Usage Tracker</h1>
+            <p>Track your email usage across different platforms</p>
+        </div>
+
+        <div class="form-section">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="emailInput">Email Address</label>
+                    <div class="email-input-wrapper">
+                        <input type="text" id="emailInput" class="email-input" placeholder="Enter username">
+                        <span class="email-suffix">@gmail.com</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="noteInput">Notes (Optional)</label>
+                    <textarea id="noteInput" class="note-input" placeholder="Add any notes about this email..."></textarea>
+                </div>
+            </div>
+
+            <div class="apps-section">
+                <label>App Usage Status</label>
+                <div class="apps-grid">
+                    <div class="app-toggle unknown" data-app="shopee" data-status="unknown">
+                        <div class="app-icon">⚪</div>
+                        <div class="app-name">Shopee</div>
+                    </div>
+                    <div class="app-toggle unknown" data-app="gemini" data-status="unknown">
+                        <div class="app-icon">⚪</div>
+                        <div class="app-name">Gemini</div>
+                    </div>
+                    <div class="app-toggle unknown" data-app="chatgpt" data-status="unknown">
+                        <div class="app-icon">⚪</div>
+                        <div class="app-name">ChatGPT</div>
+                    </div>
+                    <div class="app-toggle unknown" data-app="tiktok" data-status="unknown">
+                        <div class="app-icon">⚪</div>
+                        <div class="app-name">TikTok</div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="add-button" id="addButton">Add Email</button>
+            <div id="alertContainer"></div>
+        </div>
+
+        <div class="table-section">
+            <div class="table-header">
+                <h2 class="table-title">Email Records</h2>
+                <button class="refresh-button" id="refreshButton">🔄 Refresh</button>
+            </div>
+            <div id="tableContainer">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Loading data...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js@2';
+
+        // Supabase configuration
+        const supabaseUrl = 'https://tuyttwketzbewvqqqdum.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1eXR0d2tldHpiZXd2cXFxZHVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODM4MDAsImV4cCI6MjA2ODc1OTgwMH0.3S9meIoh6ULCH2L4-R_wzud2rw70U8lJzs4gj9028fY';
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        // DOM elements
+        const emailInput = document.getElementById('emailInput');
+        const noteInput = document.getElementById('noteInput');
+        const addButton = document.getElementById('addButton');
+        const refreshButton = document.getElementById('refreshButton');
+        const tableContainer = document.getElementById('tableContainer');
+        const alertContainer = document.getElementById('alertContainer');
+        const appToggles = document.querySelectorAll('.app-toggle');
+
+        // App status management
+        const statusCycle = ['unknown', 'used', 'unused'];
+        const statusIcons = {
+            unknown: '⚪',
+            used: '✅',
+            unused: '❌'
+        };
+
+        let currentAppStates = {
+            shopee: 'unknown',
+            gemini: 'unknown',
+            chatgpt: 'unknown',
+            tiktok: 'unknown'
+        };
+
+        // Utility functions
+        function showAlert(message, type = 'error') {
+            const alert = document.createElement('div');
+            alert.className = `alert ${type}`;
+            alert.textContent = message;
+            alertContainer.innerHTML = '';
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        function updateAppToggle(element, status) {
+            element.className = `app-toggle ${status}`;
+            element.dataset.status = status;
+            element.querySelector('.app-icon').textContent = statusIcons[status];
+        }
+
+        function cycleAppStatus(app) {
+            const currentStatus = currentAppStates[app];
+            const currentIndex = statusCycle.indexOf(currentStatus);
+            const nextIndex = (currentIndex + 1) % statusCycle.length;
+            const nextStatus = statusCycle[nextIndex];
+            
+            currentAppStates[app] = nextStatus;
+            
+            const toggle = document.querySelector(`[data-app="${app}"]`);
+            updateAppToggle(toggle, nextStatus);
+        }
+
+        function resetForm() {
+            emailInput.value = '';
+            noteInput.value = '';
+            
+            // Reset all app states
+            Object.keys(currentAppStates).forEach(app => {
+                currentAppStates[app] = 'unknown';
+                const toggle = document.querySelector(`[data-app="${app}"]`);
+                updateAppToggle(toggle, 'unknown');
+            });
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function createTableAppToggle(app, status, emailId) {
+            const toggle = document.createElement('span');
+            toggle.className = 'table-app-toggle';
+            toggle.textContent = statusIcons[status];
+            toggle.style.color = status === 'used' ? '#10b981' : status === 'unused' ? '#ef4444' : '#9ca3af';
+            toggle.style.cursor = 'pointer';
+            
+            toggle.addEventListener('click', async () => {
+                const currentIndex = statusCycle.indexOf(status);
+                const nextIndex = (currentIndex + 1) % statusCycle.length;
+                const nextStatus = statusCycle[nextIndex];
+                
+                try {
+                    const { error } = await supabase
+                        .from('email_usage')
+                        .update({ [app]: nextStatus })
+                        .eq('id', emailId);
+                    
+                    if (error) throw error;
+                    
+                    toggle.textContent = statusIcons[nextStatus];
+                    toggle.style.color = nextStatus === 'used' ? '#10b981' : nextStatus === 'unused' ? '#ef4444' : '#9ca3af';
+                    status = nextStatus;
+                    
+                } catch (error) {
+                    showAlert(`Failed to update ${app} status: ${error.message}`);
+                }
+            });
+            
+            return toggle;
+        }
+
+        async function loadData() {
+            try {
+                tableContainer.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Loading data...
+                    </div>
+                `;
+
+                const { data, error } = await supabase
+                    .from('email_usage')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                if (data.length === 0) {
+                    tableContainer.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📭</div>
+                            <h3>No emails tracked yet</h3>
+                            <p>Add your first email to get started!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const table = document.createElement('div');
+                table.className = 'table-container';
+                table.innerHTML = `
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Created</th>
+                                <th>Shopee</th>
+                                <th>Gemini</th>
+                                <th>ChatGPT</th>
+                                <th>TikTok</th>
+                                <th>Notes</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                        </tbody>
+                    </table>
+                `;
+
+                const tbody = table.querySelector('#tableBody');
+                
+                data.forEach(row => {
+                    const tr = document.createElement('tr');
+                    
+                    const emailCell = document.createElement('td');
+                    emailCell.textContent = row.email;
+                    emailCell.style.fontWeight = '600';
+                    
+                    const dateCell = document.createElement('td');
+                    dateCell.textContent = formatDate(row.created_at);
+                    dateCell.style.fontSize = '0.8rem';
+                    dateCell.style.color = '#6b7280';
+                    
+                    const shopeeCell = document.createElement('td');
+                    shopeeCell.appendChild(createTableAppToggle('shopee', row.shopee, row.id));
+                    
+                    const geminiCell = document.createElement('td');
+                    geminiCell.appendChild(createTableAppToggle('gemini', row.gemini, row.id));
+                    
+                    const chatgptCell = document.createElement('td');
+                    chatgptCell.appendChild(createTableAppToggle('chatgpt', row.chatgpt, row.id));
+                    
+                    const tiktokCell = document.createElement('td');
+                    tiktokCell.appendChild(createTableAppToggle('tiktok', row.tiktok, row.id));
+                    
+                    const noteCell = document.createElement('td');
+                    noteCell.textContent = row.note || '-';
+                    noteCell.style.maxWidth = '200px';
+                    noteCell.style.overflow = 'hidden';
+                    noteCell.style.textOverflow = 'ellipsis';
+                    noteCell.style.whiteSpace = 'nowrap';
+                    if (row.note) {
+                        noteCell.title = row.note;
+                    }
+                    
+                    const actionCell = document.createElement('td');
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-button';
+                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.addEventListener('click', async () => {
+                        if (confirm('Are you sure you want to delete this email record?')) {
+                            try {
+                                const { error } = await supabase
+                                    .from('email_usage')
+                                    .delete()
+                                    .eq('id', row.id);
+                                
+                                if (error) throw error;
+                                
+                                showAlert('Email record deleted successfully!', 'success');
+                                loadData();
+                            } catch (error) {
+                                showAlert(`Failed to delete record: ${error.message}`);
+                            }
+                        }
+                    });
+                    actionCell.appendChild(deleteBtn);
+                    
+                    tr.appendChild(emailCell);
+                    tr.appendChild(dateCell);
+                    tr.appendChild(shopeeCell);
+                    tr.appendChild(geminiCell);
+                    tr.appendChild(chatgptCell);
+                    tr.appendChild(tiktokCell);
+                    tr.appendChild(noteCell);
+                    tr.appendChild(actionCell);
+                    
+                    tbody.appendChild(tr);
+                });
+
+                tableContainer.innerHTML = '';
+                tableContainer.appendChild(table);
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showAlert(`Failed to load data: ${error.message}`);
+                tableContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⚠️</div>
+                        <h3>Failed to load data</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function addEmail() {
+            const username = emailInput.value.trim();
+            const note = noteInput.value.trim();
+
+            if (!username) {
+                showAlert('Please enter an email username');
+                return;
+            }
+
+            if (username.includes('@')) {
+                showAlert('Please enter only the username part (before @gmail.com)');
+                return;
+            }
+
+            const email = `${username}@gmail.com`;
+
+            try {
+                addButton.disabled = true;
+                addButton.textContent = 'Adding...';
+
+                const { data, error } = await supabase
+                    .from('email_usage')
+                    .insert([{
+                        email: email,
+                        shopee: currentAppStates.shopee,
+                        gemini: currentAppStates.gemini,
+                        chatgpt: currentAppStates.chatgpt,
+                        tiktok: currentAppStates.tiktok,
+                        note: note || null
+                    }])
+                    .select();
+
+                if (error) throw error;
+
+                showAlert('Email added successfully!', 'success');
+                resetForm();
+                loadData();
+
+            } catch (error) {
+                console.error('Error adding email:', error);
+                showAlert(`Failed to add email: ${error.message}`);
+            } finally {
+                addButton.disabled = false;
+                addButton.textContent = 'Add Email';
+            }
+        }
+
+        // Event listeners
+        appToggles.forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const app = toggle.dataset.app;
+                cycleAppStatus(app);
+            });
+        });
+
+        addButton.addEventListener('click', addEmail);
+        refreshButton.addEventListener('click', loadData);
+
+        emailInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addEmail();
+            }
+        });
+
+        // Initialize
+        loadData();
+    </script>
+</body>
+</html>
